@@ -102,23 +102,23 @@ To meet HIPAA compliance requirements for Protected Health Information (PHI):
 ### Tenant Isolation Strategy
 Tenant isolation in this scaffold is enforced at the software layer via service query scopes:
 - **Application Filtering (Implemented)**: The `ManifestService` resolves `ITenantService` and filters by `LabId == tenant.LabId` for all queries and mutations.
-- **EF Core Global Query Filters**: For production, we would register a Global Query Filter in `AppDbContext.OnModelCreating` to automatically restrict all queries globally, preventing developer omission.
+- **EF Core Global Query Filters**: For production, I would register a Global Query Filter in `AppDbContext.OnModelCreating` to automatically restrict all queries globally, preventing developer omission.
 - **Row-Level Security (RLS)**: At the database tier, SQL Server Row-Level Security can be configured with security policies that match the request context session variable (`SESSION_CONTEXT`), ensuring database-level queries cannot escape tenant scope.
 
 ---
 
 ## 8. If You Had Two More Days
-If given two more days to build or harden this application further, we would prioritize the following:
+If given two more days to build or harden this application further, I would prioritize the following:
 
 1. **Authentication & JWT Role-Based Access Control (RBAC)**
-   - *Why*: Currently, the tenant ID is passed via a simulated `X-Lab-Id` request header and the user ID is hardcoded as `current-user`. We would integrate Microsoft Entra ID or Auth0 to authenticate users, issuing cryptographically signed JWTs. The tenant ID and user roles (e.g., `LabTech`, `LabManager`, `ClinicalAdmin`) would be securely extracted from claims, preventing spoofing.
+   - *Why*: Currently, the tenant ID is passed via a simulated `X-Lab-Id` request header and the user ID is hardcoded as `current-user`. I would integrate Microsoft Entra ID or Auth0 to authenticate users, issuing cryptographically signed JWTs. The tenant ID and user roles (e.g., `LabTech`, `LabManager`, `ClinicalAdmin`) would be securely extracted from claims, preventing spoofing.
    
 2. **True Database-Level Tenant Isolation (RLS / EF Filters)**
    - *Why*: Relying on developer-written `.Where(m => m.LabId == _tenant.LabId)` is error-prone as the project grows. Implementing EF Core Global Query Filters and SQL Server Row-Level Security (RLS) ensures that even if a developer forgets a filter, the database or context boundary rejects cross-tenant data leakage.
 
 3. **Optimistic Concurrency & Audit History Tracking**
-   - *Why*: Multiple lab technicians might try to receive or resolve discrepancies on the same manifest simultaneously. We would configure EF Core `[ConcurrencyCheck]` on specimens and manifests. We would also implement EF Core Shadow Properties or a library like `Audit.NET` to automatically track pre/post-change history for compliance.
+   - *Why*: Multiple lab technicians might try to receive or resolve discrepancies on the same manifest simultaneously. I would configure EF Core `[ConcurrencyCheck]` on specimens and manifests. I would also implement EF Core Shadow Properties or a library like `Audit.NET` to automatically track pre/post-change history for compliance.
 
 4. **Advanced Scan Workflow (Full Scan Barcode Handling)**
-   - *Why*: The UI currently defaults to "Fast Count" verification. We would fully implement the "Full Scan" mode, integrating a real browser barcode-reading library (e.g. `html5-qrcode`) to allow technicians to scan barcodes directly using device cameras, automatically matching scanned specimens in real-time.
+   - *Why*: The UI currently defaults to "Fast Count" verification. I would fully implement the "Full Scan" mode, integrating a real browser barcode-reading library (e.g. `html5-qrcode`) to allow technicians to scan barcodes directly using device cameras, automatically matching scanned specimens in real-time.
 
